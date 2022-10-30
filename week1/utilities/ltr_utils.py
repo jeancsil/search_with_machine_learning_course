@@ -9,6 +9,7 @@ def create_rescore_ltr_query(user_query: str, query_obj, click_prior_query: str,
     # Create the base query, use a much bigger window
     # add on the rescore
     ##### Step 4.e:
+    print("$$$$$$$ " + str(active_features))
     # print("IMPLEMENT ME: create_rescore_ltr_query")
     if active_features is not None and len(active_features) > 0:
         query_obj["rescore"] = {
