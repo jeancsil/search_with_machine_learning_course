@@ -21,7 +21,7 @@ def create_rescore_ltr_query(user_query: str, query_obj, click_prior_query: str,
                     },
                     "model": ltr_model_name,
                     # Since we are using a named store, as opposed to simply '_ltr', we need to pass it in
-                    "score_mode": "total",
+
                     "store": ltr_store_name,
                     "active_features": []
                 }
