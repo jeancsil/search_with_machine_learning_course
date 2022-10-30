@@ -17,7 +17,8 @@ def create_rescore_ltr_query(user_query: str, query_obj, click_prior_query: str,
                 "rescore_query": {
                     "sltr": {
                         "params": {
-                            "keywords": user_query
+                            "keywords": user_query,
+                            "skus": user_query
                         },
                         "model": ltr_model_name,
                         # Since we are using a named store, as opposed to simply '_ltr', we need to pass it in
@@ -94,7 +95,8 @@ def create_feature_log_query(query, doc_ids, click_prior_query, featureset_name,
                             "featureset": featureset_name,
                             "store": ltr_store_name,
                             "params": {
-                                "keywords": query
+                                "keywords": query,
+                                "skus": query
                             }
                         }
                     }
