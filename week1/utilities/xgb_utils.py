@@ -26,7 +26,7 @@ def plots(xgb_model, xgb_model_name, xgb_feat_map, xgb_plot):
 
 
 # xgb_train_data is a string path to our training file
-def train_jean(xgb_train_data, num_rounds=5, xgb_conf=None):
+def train(xgb_train_data, num_rounds=5, xgb_conf=None):
     feat_map_file = "xgb-feat-map.txt"
     xgb_params = {'max_depth': 2, 'eta': 0.5, 'silent': 1, 'objective': 'reg:logistic'}
     print("Training XG Boost on %s for %s rounds with params: %s" % (xgb_train_data, num_rounds, xgb_params))
@@ -39,7 +39,7 @@ def train_jean(xgb_train_data, num_rounds=5, xgb_conf=None):
     return bst, xgb_params
 
 
-def train(xgb_train_data, num_rounds=5, xgb_conf=None):
+def train_continue(xgb_train_data, num_rounds=5, xgb_conf=None):
     xgb_params = {'objective': 'reg:logistic'}
     if xgb_conf is not None:
         with open(xgb_conf) as json_file:
