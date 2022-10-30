@@ -20,7 +20,8 @@
           "match_phrase": {
             "name.hyphens": {
               "query": "{{words}}",
-              "slop": 6
+              "slop": 6,
+              "boost": 40
             }
           }
         }
