@@ -29,8 +29,8 @@ def create_rescore_ltr_query(user_query: str, query_obj, click_prior_query: str,
         }
     }
 
-    #if active_features is not None and len(active_features) > 0:
-    #    query_obj["rescore"]["query"]["rescore_query"]["sltr"]["active_features"] = active_features
+    if active_features is not None and len(active_features) > 0:
+        query_obj["rescore"]["query"]["rescore_query"]["sltr"]["active_features"] = active_features
 
     return query_obj
 
