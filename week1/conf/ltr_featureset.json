@@ -12,6 +12,18 @@
             "name": "{{keywords}}"
           }
         }
+      },
+      {
+        "name": "name_match_phrase",
+        "template_language": "mustache",
+        "template": {
+          "match_phrase": {
+            "name.hyphens": {
+              "query": "{{words}}",
+              "slop": 6
+            }
+          }
+        }
       }
     ]
   }
