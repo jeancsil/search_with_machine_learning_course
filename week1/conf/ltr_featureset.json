@@ -12,21 +12,6 @@
             "name": "{{keywords}}"
           }
         }
-      },
-      {
-        "name": "sku_match",
-        "params": [
-          "skus"
-        ],
-        "template_language": "mustache",
-        "template": {
-          "query_string": {
-            "query": "{{skus}}",
-            "fields": [
-              "_id"
-            ]
-          }
-        }
       }
     ]
   }
