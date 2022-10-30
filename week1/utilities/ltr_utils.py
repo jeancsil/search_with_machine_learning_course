@@ -21,11 +21,11 @@ def create_rescore_ltr_query(user_query: str, query_obj, click_prior_query: str,
                     },
                     "model": ltr_model_name,
                     # Since we are using a named store, as opposed to simply '_ltr', we need to pass it in
-
                     "store": ltr_store_name,
                     "active_features": []
                 }
             },
+            "score_mode": "total",
             "rescore_query_weight": rescore_query_weight,
             "query_weight": main_query_weight
         }
