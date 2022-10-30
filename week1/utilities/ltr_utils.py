@@ -9,27 +9,28 @@ def create_rescore_ltr_query(user_query: str, query_obj, click_prior_query: str,
     # Create the base query, use a much bigger window
     # add on the rescore
     ##### Step 4.e:
-    print("$$$$$$$ " + str(active_features))
     # print("IMPLEMENT ME: create_rescore_ltr_query")
-    if active_features is not None and len(active_features) > 0:
-        query_obj["rescore"] = {
-            "window_size": rescore_size,
-            "query": {
-                "rescore_query": {
-                    "sltr": {
-                        "params": {
-                            "keywords": user_query,
-                            "skus": user_query
-                        },
-                        "model": ltr_model_name,
-                        # Since we are using a named store, as opposed to simply '_ltr', we need to pass it in
-                        "store": ltr_store_name,
-                        "active_features": active_features
-                    }
-                },
-                "rescore_query_weight": rescore_query_weight
-            }
+    query_obj["rescore"] = {
+        "window_size": rescore_size,
+        "query": {
+            "rescore_query": {
+                "sltr": {
+                    "params": {
+                        "keywords": user_query,
+                        "skus": user_query
+                    },
+                    "model": ltr_model_name,
+                    # Since we are using a named store, as opposed to simply '_ltr', we need to pass it in
+                    "store": ltr_store_name,
+                    "active_features": active_features
+                }
+            },
+            "rescore_query_weight": rescore_query_weight
         }
+    }
+
+    #if active_features is not None and len(active_features) > 0:
+    #    query_obj["rescore"]["query"]["rescore_query"]["sltr"]["active_features"] = active_features
 
     return query_obj
 
