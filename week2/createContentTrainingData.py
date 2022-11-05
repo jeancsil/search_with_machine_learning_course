@@ -4,6 +4,7 @@ import glob
 from tqdm import tqdm
 import os
 import xml.etree.ElementTree as ET
+import pandas as pd
 from pathlib import Path
 
 
@@ -20,9 +21,10 @@ general = parser.add_argument_group("general")
 general.add_argument("--input", default=directory, help="The directory containing product data")
 general.add_argument("--output", default="/workspace/datasets/fasttext/output.fasttext", help="the file to output to")
 general.add_argument("--label", default="id",
-                     help="id is default and needed for downsteam use, but name is helpful for debugging")
+                     help="id is default and needed for downstream use, but name is helpful for debugging")
 
 # IMPLEMENT: Setting min_products removes infrequent categories and makes the classifier's task easier.
+# DONE
 general.add_argument("--min_products", default=0, type=int,
                      help="The minimum number of products per category (default is 0).")
 
@@ -67,9 +69,19 @@ def _label_filename(filename):
 if __name__ == '__main__':
     files = glob.glob(f'{directory}/*.xml')
     print("Writing results to %s" % output_file)
+    new_data = []
     with multiprocessing.Pool() as p:
         all_labels = tqdm(p.imap(_label_filename, files), total=len(files))
         with open(output_file, 'w') as output:
             for label_list in all_labels:
-                for (cat, name) in label_list:
-                    output.write(f'__label__{cat} {name}\n')
+                for cat, name in label_list:
+                    new_data.append({"cat": cat, "name": name})
+                    # output.write(f'__label__{cat} {name}\n')
+            # Creates a dataframe from all the collected data
+            # filters by the amount of times the same category appears (> min_products)
+            df = pd.DataFrame(new_data)
+            df = df.groupby('cat').filter(lambda x: len(x) > min_products)
+
+            # Loop through the dataframe and writes the output to a file
+            for _, row in df.iterrows():
+                output.write(f'__label__{row["cat"]} {row["name"]}\n')
