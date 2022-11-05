@@ -15,13 +15,24 @@ model = fasttext.load_model(model_path)
 top_words = "/workspace/datasets/fasttext/top_words.txt"
 print("Iterating over {}".format(top_words))
 
-threshold = 0.8
-for words in top_words:
-    nn_words = model.get_nearest_neighbors(words)
-    print(nn_words[0])
-    print(nn_words[0][0])
-    print(nn_words[0][1])
+output_csv = "/workspace/datasets/fasttext/synonyms.csv"
 
-    exit(1)
-    #for nn in nn_words:
-    #    if nn[]
+threshold = 0.8
+output_rows = []
+for top_word in top_words:
+    synonyms = model.get_nearest_neighbors(top_word)
+
+    row = [top_word]
+    for synonym in synonyms:
+        syn_score = synonym[0]
+        syn_word = synonym[1]
+
+        if syn_score < threshold:
+            continue
+        row.append(syn_word)
+        if len(row) > 1:
+            output_rows.append(",".join(row))
+
+with open(output_csv, 'w') as o:
+    for r in output_rows:
+        o.write(r)
