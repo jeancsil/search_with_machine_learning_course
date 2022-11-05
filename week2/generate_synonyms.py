@@ -19,6 +19,9 @@ threshold = 0.8
 for words in top_words:
     nn_words = model.get_nearest_neighbors(words)
     print(nn_words[0])
+    print(nn_words[0][0])
+    print(nn_words[0][1])
+
     exit(1)
     #for nn in nn_words:
     #    if nn[]
