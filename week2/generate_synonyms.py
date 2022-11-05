@@ -13,10 +13,12 @@ print("Loading the model located in {}".format(model_path))
 model = fasttext.load_model(model_path)
 
 top_words = "/workspace/datasets/fasttext/top_words.txt"
-print("Iterate over {}".format(top_words))
+print("Iterating over {}".format(top_words))
 
+threshold = 0.8
 for words in top_words:
     nn_words = model.get_nearest_neighbors(words)
-    print(nn_words)
-    print(type(nn_words))
+    print(nn_words[0])
     exit(1)
+    #for nn in nn_words:
+    #    if nn[]
