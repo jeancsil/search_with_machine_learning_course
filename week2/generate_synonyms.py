@@ -12,26 +12,27 @@ model_path = "/workspace/datasets/fasttext/title_model2.bin"
 print("Loading the model located in {}".format(model_path))
 model = fasttext.load_model(model_path)
 
-top_words = "/workspace/datasets/fasttext/top_words.txt"
-print("Iterating over {}".format(top_words))
+top_words_file = "/workspace/datasets/fasttext/top_words.txt"
+print("Iterating over {}".format(top_words_file))
 
 output_csv = "/workspace/datasets/fasttext/synonyms.csv"
 
 threshold = 0.8
 output_rows = []
-for top_word in top_words:
-    synonyms = model.get_nearest_neighbors(top_word)
+with open(top_words_file) as top_words:
+    for top_word in top_words.readline():
+        synonyms = model.get_nearest_neighbors(top_word)
 
-    row = [top_word]
-    for synonym in synonyms:
-        syn_score = synonym[0]
-        syn_word = synonym[1]
+        row = [top_word]
+        for synonym in synonyms:
+            syn_score = synonym[0]
+            syn_word = synonym[1]
 
-        if syn_score < threshold:
-            continue
-        row.append(syn_word)
-        if len(row) > 1:
-            output_rows.append(",".join(row))
+            if syn_score < threshold:
+                continue
+            row.append(syn_word)
+            if len(row) > 1:
+                output_rows.append(",".join(row))
 
 with open(output_csv, 'w') as o:
     for r in output_rows:
