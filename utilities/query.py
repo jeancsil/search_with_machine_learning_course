@@ -250,12 +250,12 @@ if __name__ == "__main__":
 
     )
     index_name = args.index
-    query_prompt = "\nEnter your query (type 'Exit' to exit or hit ctrl-c):"
-    print(query_prompt)
+    #query_prompt = "\nEnter your query (type 'Exit' to exit or hit ctrl-c):"
+    #print(query_prompt)
     for line in sys.stdin:
         query = line.rstrip()
         if query == "Exit":
             break
         search(client=opensearch, user_query=query, index=index_name, use_synonyms=use_synonyms)
 
-        print(query_prompt)
+        #print(query_prompt)
