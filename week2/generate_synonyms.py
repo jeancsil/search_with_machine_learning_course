@@ -19,21 +19,26 @@ output_csv = "/workspace/datasets/fasttext/synonyms.csv"
 
 threshold = 0.8
 output_rows = []
-with open(top_words_file) as top_words:
-    for top_word in top_words.readline():
+with open(top_words_file) as f:
+    lines = [line for line in f]
+    for top_word in lines:
+        print("top word: {}".format(top_word))
         synonyms = model.get_nearest_neighbors(top_word)
+        print("synonyms: {} {}".format(len(synonyms), synonyms))
 
         row = [top_word]
         for synonym in synonyms:
             syn_score = synonym[0]
             syn_word = synonym[1]
+            print("syn_score:{} syn_word:{}".format(syn_score, syn_word))
 
             if syn_score < threshold:
                 continue
             row.append(syn_word)
             if len(row) > 1:
                 output_rows.append(",".join(row))
+        print("---------------------------------")
 
 with open(output_csv, 'w') as o:
     for r in output_rows:
-        o.write(r)
+        o.write(r + "\n")
