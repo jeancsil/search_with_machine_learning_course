@@ -2,6 +2,7 @@
 # weeks (e.g. query understanding).  See the main section at the bottom of the file
 from opensearchpy import OpenSearch
 import warnings
+
 warnings.filterwarnings("ignore", category=FutureWarning)
 import argparse
 import json
@@ -12,10 +13,10 @@ import pandas as pd
 import fileinput
 import logging
 
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logging.basicConfig(format='%(levelname)s:%(message)s')
+
 
 # expects clicks and impressions to be in the row
 def create_prior_queries_from_group(
@@ -190,7 +191,8 @@ def search(client, user_query, index="bbuy_products", sort="_score", sortDir="de
     #### W3: classify the query
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
-    query_obj = create_query(user_query, click_prior_query=None, filters=None, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
+    query_obj = create_query(user_query, click_prior_query=None, filters=None, sort=sort, sortDir=sortDir,
+                             source=["name", "shortDescription"])
     logging.info(query_obj)
     response = client.search(query_obj, index=index)
     if response and response['hits']['hits'] and len(response['hits']['hits']) > 0:
@@ -248,5 +250,3 @@ if __name__ == "__main__":
         search(client=opensearch, user_query=query, index=index_name)
 
         print(query_prompt)
-
-    
