@@ -26,7 +26,7 @@ with open(top_words_file) as f:
         synonyms = model.get_nearest_neighbors(top_word)
         print("synonyms: {} {}".format(len(synonyms), synonyms))
 
-        row = [top_word]
+        row = set([top_word.strip()])
         for synonym in synonyms:
             syn_score = synonym[0]
             syn_word = synonym[1]
@@ -34,11 +34,12 @@ with open(top_words_file) as f:
 
             if syn_score < threshold:
                 continue
-            row.append(syn_word)
-            if len(row) > 1:
-                output_rows.append(",".join(row))
+            row.add(syn_word)
+        if len(row) > 1:
+            output_rows.append([row])
         print("---------------------------------")
 
 with open(output_csv, 'w') as o:
-    for r in output_rows:
-        o.write(r + "\n")
+    for output_row in output_rows:
+        for i in output_row:
+            o.write(",".join(i) + "\n")
