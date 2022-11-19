@@ -219,7 +219,7 @@ def search(client, user_query, index="bbuy_products", sort="_score", sortDir="de
     normalized_user_query = normalize_user_query(user_query)
     # classification_without_norm = model.predict(user_query)
     classification, predicted_score = model.predict(normalized_user_query)
-    classification = classification[0].replace("__label__", "")
+    classification = [classification[0].replace("__label__", "")]
     print(classification)
     print(predicted_score)
 
