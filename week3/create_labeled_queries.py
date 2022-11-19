@@ -33,6 +33,7 @@ def fix_normalization(input_str: str):
     return " ".join([stemmer.stem(x) for x in input_str.split(" ")])
 
 
+min_queries = 1
 if args.min_queries:
     min_queries = int(args.min_queries)
 
@@ -60,25 +61,74 @@ queries_df = pd.read_csv(queries_file_name)[['category', 'query']]
 queries_df = queries_df[queries_df['category'].isin(categories)]
 
 # IMPLEMENT ME: Convert queries to lowercase, and optionally implement other normalization, like stemming.
+## If a category is associated with less than the minimum number of queries, then it gets rolled up to its parent category.
+## Loop queries_df(category, query) and if a category has too few queries
+## Get the parent of this category and see if the above is false
+
 queries_df['query'] = queries_df['query'].apply(lambda x: fix_normalization(x))
+# -----------------------------
+queries_df_with_counts = queries_df.groupby('category').size().reset_index(name='counts')
+queries_with_parent_df = queries_df.merge(queries_df_with_counts, how='left', on='category').merge(parents_df,
+                                                                                                   how='left',
+                                                                                                   on='category')
 
-# Counts
-queries_grouped_df = queries_df.groupby(['category']).size().reset_index(name='query_count')
-queries_grouped_df['should_include'] = queries_grouped_df['query_count'].apply(lambda x: True if x >= min_queries else False)
-# print(len(queries_df[queries_df["category"] == "abcat0701001"]))
-# print(len(queries_grouped_df[queries_grouped_df['query_count'] >= 1000]))
+while 0 < len(queries_with_parent_df[queries_with_parent_df['counts'] < min_queries]):
+    queries_with_parent_df.loc[queries_with_parent_df['counts'] < min_queries, 'category'] = queries_with_parent_df[
+        'parent']
+    queries_df = queries_with_parent_df[['category', 'query']]
+    queries_df = queries_df[queries_df['category'].isin(categories)]
+    queries_df_with_counts = queries_df.groupby('category').size().reset_index(name='counts')
+    queries_with_parent_df = queries_df.merge(queries_df_with_counts, how='left', on='category').merge(parents_df,
+                                                                                                       how='left',
+                                                                                                       on='category')
+# -----------------------------
+# queries_with_count_df = queries_df.groupby(['category']).size().reset_index(name='count')
+# # print(queries_with_count_df)
+#
+# categories_without_enough_queries = queries_with_count_df[queries_with_count_df['count'] < min_queries]
+# print("Categories without enough queries: {}".format(len(categories_without_enough_queries)))
+# # print("========")
+# for idx, row in categories_without_enough_queries.iterrows():
+#     has_enough_queries = False
+#     while not has_enough_queries:
+#         print("looking for " + row['category'])
+#         found = parents_df[parents_df['category'] == row['category']]['parent']
+#         if len(found) <= 0:
+#             print("NOT FOUND")
+#             exit(1)
+#         parent_category = parents_df.loc[found.index]
+#         print("\n")
+#         print(parent_category['parent'].values[0])
+#         print("\n")
+#         print(queries_with_count_df[queries_with_count_df['category'] == parent_category['parent'].values[0]])
+#         # print(queries_with_count_df[queries_with_count_df['category'] == parent_category['parent']])
+#         # print(queries_with_count_df['category'] == parent_category)
+#         # parent_category_count = queries_with_count_df[queries_with_count_df['category'] == parent_category]
+#         # print(parent_category_count)
+#         exit(0)
+#         #has_enough_queries = parent_category_count >= min_queries
+#         # print(found.index)
+#         print()
+#         # exit(0)
+#         # parent_category = parents_df[parents_df['category'] == row['category']]['parent']
+#         # print(queries_with_count_df[queries_with_count_df['category'] == parent_category])
+#         # has_enough_queries = queries_with_count_df[queries_with_count_df['category'] == parent_category][
+#         #                         'count'] >= min_queries
+#         # print("=====> updating the count of categories to " + queries_with_count_df[queries_with_count_df['category'] == parent_category][
+#         #                         'count'] + " results in " + has_enough_queries)
+#         # print(row['category'], "parent:", parent_category)
+#         # break
+#
 
-# IMPLEMENT ME: Roll up categories to ancestors to satisfy the minimum number of queries per category.
-while ((~queries_grouped_df['should_include']).sum() > 0):
-    queries_grouped_df = queries_grouped_df.merge(parents_df, how='left', on='category')
-    queries_df = queries_df.merge(queries_grouped_df, how='left', on='category')
+#
+# print(queries_df.head(10))
+# print(parents_df.head(10))
 
-    queries_df['category'] = queries_df.apply(
-        lambda x: str(x['category']) if x['should_include'] else str(x['parent']), axis=1)
-    queries_df = queries_df.drop(columns=['parent', 'should_include', 'query_count'])
+# lixo = len(queries_df[queries_df["category"] == "abcat0701001"])
+# print(lixo == 13830)
 
-    queries_grouped_df = queries_df.groupby(['category']).agg(count=('query', 'query_count')).reset_index()
-    queries_grouped_df['should_include'] = queries_grouped_df['query_count'].apply(lambda x: True if x >= min_queries else False)
+print(len(queries_df[queries_df["category"] == "abcat0701001"]) == 13830)
+print(len(queries_with_parent_df[queries_with_parent_df['counts'] >= min_queries]))
 
 
 # Create labels in fastText format.
