@@ -57,7 +57,7 @@ def create_prior_queries(doc_ids, doc_id_weights,
 
 
 # Hardcoded query here.  Better to use search templates or other query config.
-def create_query(user_query, normalized_user_query, click_prior_query, filters, sort="_score", sortDir="desc", size=10,
+def create_query(user_query, boost_by_category, click_prior_query, filters, sort="_score", sortDir="desc", size=10,
                  source=None):
     query_obj = {
         'size': size,
@@ -176,6 +176,15 @@ def create_query(user_query, normalized_user_query, click_prior_query, filters, 
             }
         }
     }
+    if boost_by_category is not None:
+        query_obj["query"]["function_score"]["functions"].append(
+            {
+                "terms": {
+                    "categoryPathIds": boost_by_category
+                }
+            },
+        )
+
     if click_prior_query is not None and click_prior_query != "":
         query_obj["query"]["function_score"]["query"]["bool"]["should"].append({
             "query_string": {
@@ -202,19 +211,31 @@ def normalize_user_query(input_str: str):
     return " ".join([stemmer.stem(x) for x in input_str.split(" ")])
 
 
-def search(client, user_query, index="bbuy_products", sort="_score", sortDir="desc", classifier_threshold=None):
+def search(client, user_query, index="bbuy_products", sort="_score", sortDir="desc"):
     #### W3: classify the query
+    classifier_threshold = 0.5
     normalized_user_query = normalize_user_query(user_query)
     classification_without_norm = model.predict(user_query)
     classification_norm = model.predict(normalized_user_query)
 
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
-    classification = max(classification_without_norm[1], classification_norm[1])
+    # classification = max(classification_without_norm[1], classification_norm[1])
 
-    if classifier_threshold is not None and classification_norm[1] >= classifier_threshold:
+    classification = 0
+    classified_category = None
+    if classification_without_norm[1] > classification_norm[1]:
+        classification = classification_norm[1]
+        classified_category = classification_norm[0]
+    if classification_norm[1] >= classification_without_norm[1]:
+        classification = classification_without_norm[1]
+        classified_category = classification_without_norm[0]
+
+    boost_by_category = False
+    if classifier_threshold is not None and classification >= classifier_threshold:
         print("Using the classification")
-    query_obj = create_query(user_query, normalized_user_query=normalized_user_query, click_prior_query=None,
+        boost_by_category = classified_category
+    query_obj = create_query(user_query, boost_by_category=boost_by_category, click_prior_query=None,
                              filters=None, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
     logging.info(query_obj)
     response = client.search(query_obj, index=index)
@@ -243,8 +264,6 @@ if __name__ == "__main__":
                          help='The OpenSearch port')
     general.add_argument('--user',
                          help='The OpenSearch admin.  If this is set, the program will prompt for password too. If not set, use default of admin/admin')
-    general.add_argument("-ct", '--classifier_threshold', type=float, default=0.0,
-                         help='The threshold for the classifier')
 
     args = parser.parse_args()
 
@@ -254,7 +273,6 @@ if __name__ == "__main__":
 
     host = args.host
     port = args.port
-    classifier_threshold = args.classifier_threshold
     if args.user:
         password = getpass()
         auth = (args.user, password)
@@ -279,6 +297,6 @@ if __name__ == "__main__":
         query = line.rstrip()
         if query == "Exit":
             break
-        search(client=opensearch, user_query=query, index=index_name, classifier_threshold=classifier_threshold)
+        search(client=opensearch, user_query=query, index=index_name)
 
         print(query_prompt)
