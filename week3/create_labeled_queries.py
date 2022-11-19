@@ -25,11 +25,10 @@ args = parser.parse_args()
 output_file_name = args.output
 
 
-def fix_normalization(input_str: str):
+def normalize(input_str: str):
     input_str = input_str.lower()
     input_str = re.sub('[^a-z0-9]', ' ', input_str)
     input_str = re.sub('\s+', ' ', input_str)
-    # return input_str
     return " ".join([stemmer.stem(x) for x in input_str.split(" ")])
 
 
@@ -65,7 +64,7 @@ queries_df = queries_df[queries_df['category'].isin(categories)]
 ## Loop queries_df(category, query) and if a category has too few queries
 ## Get the parent of this category and see if the above is false
 
-queries_df['query'] = queries_df['query'].apply(lambda x: fix_normalization(x))
+queries_df['query'] = queries_df['query'].apply(lambda x: normalize(x))
 # -----------------------------
 queries_df_with_counts = queries_df.groupby('category').size().reset_index(name='counts')
 queries_with_parent_df = queries_df.merge(queries_df_with_counts, how='left', on='category').merge(parents_df,
