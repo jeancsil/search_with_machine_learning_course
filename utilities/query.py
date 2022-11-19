@@ -59,6 +59,13 @@ def create_prior_queries(doc_ids, doc_id_weights,
 # Hardcoded query here.  Better to use search templates or other query config.
 def create_query(user_query, boost_by_category, click_prior_query, filters, sort="_score", sortDir="desc", size=10,
                  source=None):
+    if boost_by_category is not None:
+        filters = {
+            "terms": {
+                "categoryPathIds": boost_by_category
+            }
+        }
+
     query_obj = {
         'size': size,
         "sort": [
@@ -176,14 +183,6 @@ def create_query(user_query, boost_by_category, click_prior_query, filters, sort
             }
         }
     }
-    if boost_by_category is not None:
-        query_obj["query"]["function_score"]["functions"].append(
-            {
-                "terms": {
-                    "categoryPathIds": boost_by_category
-                }
-            },
-        )
 
     if click_prior_query is not None and click_prior_query != "":
         query_obj["query"]["function_score"]["query"]["bool"]["should"].append({
@@ -235,7 +234,7 @@ def search(client, user_query, index="bbuy_products", sort="_score", sortDir="de
     boost_by_category = False
     if classifier_threshold is not None and classification >= classifier_threshold:
         print("Using the classification")
-        boost_by_category = classified_category
+        boost_by_category = classified_category.replace("__label__", "")
     query_obj = create_query(user_query, boost_by_category=boost_by_category, click_prior_query=None,
                              filters=None, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
     logging.info(query_obj)
