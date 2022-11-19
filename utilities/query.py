@@ -201,6 +201,7 @@ def create_query(user_query, boost_by_category, click_prior_query, filters, sort
             print("Couldn't replace query for *")
     if source is not None:  # otherwise use the default and retrieve all source
         query_obj["_source"] = source
+    print(query_obj)
     return query_obj
 
 
