@@ -226,7 +226,7 @@ def search(client, user_query, index="bbuy_products", sort="_score", sortDir="de
     # Note: you may also want to modify the `create_query` method above
     # classification = max(classification_without_norm[1], classification_norm[1])
 
-    classified_category = classification.replace("__label__", "") if predicted_score >= classifier_threshold else None
+    classified_category = classification[0].replace("__label__", "") if predicted_score >= classifier_threshold else None
     query_obj = create_query(user_query, boost_by_category=classified_category, click_prior_query=None,
                              filters=None, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
     logging.info(query_obj)
@@ -237,9 +237,9 @@ def search(client, user_query, index="bbuy_products", sort="_score", sortDir="de
 
     print("User query:                          {}".format(user_query))
     print("Normalized User query:               {}".format(normalized_user_query))
-    print("Classification (no norm):            {}".format(classification_without_norm))
-    print("Classification (norm):               {}".format(classification_norm))
-    print("Using higher classification score:   {}".format(classification))
+    # print("Classification (no norm):            {}".format(classification_without_norm))
+    print("Classification (norm):               {}".format(classification))
+    # print("Using higher classification score:   {}".format(classification))
 
 
 if __name__ == "__main__":
