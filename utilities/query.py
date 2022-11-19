@@ -217,6 +217,10 @@ def search(client, user_query, index="bbuy_products", sort="_score", sortDir="de
     normalized_user_query = normalize_user_query(user_query)
     # classification_without_norm = model.predict(user_query)
     classification, predicted_score = model.predict(normalized_user_query)
+    print(classification)
+    print(predicted_score)
+    print(type(classification))
+    print(type(predicted_score))
 
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
