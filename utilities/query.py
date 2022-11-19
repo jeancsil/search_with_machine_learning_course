@@ -215,27 +215,15 @@ def search(client, user_query, index="bbuy_products", sort="_score", sortDir="de
     #### W3: classify the query
     classifier_threshold = 0.5
     normalized_user_query = normalize_user_query(user_query)
-    classification_without_norm = model.predict(user_query)
-    classification_norm = model.predict(normalized_user_query)
+    # classification_without_norm = model.predict(user_query)
+    classification, predicted_score = model.predict(normalized_user_query)
 
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
     # classification = max(classification_without_norm[1], classification_norm[1])
 
-    classification = 0
-    classified_category = None
-    if classification_without_norm[1] > classification_norm[1]:
-        classification = classification_norm[1]
-        classified_category = classification_norm[0]
-    if classification_norm[1] >= classification_without_norm[1]:
-        classification = classification_without_norm[1]
-        classified_category = classification_without_norm[0]
-
-    boost_by_category = False
-    if classifier_threshold is not None and classification >= classifier_threshold:
-        print("Using the classification")
-        boost_by_category = classified_category.replace("__label__", "")
-    query_obj = create_query(user_query, boost_by_category=boost_by_category, click_prior_query=None,
+    classified_category = classification.replace("__label__", "") if predicted_score >= classifier_threshold else None
+    query_obj = create_query(user_query, boost_by_category=classified_category, click_prior_query=None,
                              filters=None, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
     logging.info(query_obj)
     response = client.search(query_obj, index=index)
