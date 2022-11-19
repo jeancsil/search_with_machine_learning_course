@@ -13,6 +13,10 @@ import pandas as pd
 import fileinput
 import logging
 import fasttext
+import nltk
+import re
+
+stemmer = nltk.stem.PorterStemmer()
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -189,9 +193,19 @@ def create_query(user_query, click_prior_query, filters, sort="_score", sortDir=
     return query_obj
 
 
+def normalize_user_query(input_str: str):
+    input_str = input_str.lower()
+    input_str = re.sub('[^a-z0-9]', ' ', input_str)
+    input_str = re.sub('\s+', ' ', input_str)
+    return " ".join([stemmer.stem(x) for x in input_str.split(" ")])
+
+
 def search(client, user_query, index="bbuy_products", sort="_score", sortDir="desc"):
     #### W3: classify the query
-    print(model.predict(user_query))
+    normalized_user_query = normalize_user_query(user_query)
+    classification = model.predict(user_query)
+    classification_norm = model.predict(normalized_user_query)
+
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
     query_obj = create_query(user_query, click_prior_query=None, filters=None, sort=sort, sortDir=sortDir,
@@ -201,6 +215,11 @@ def search(client, user_query, index="bbuy_products", sort="_score", sortDir="de
     if response and response['hits']['hits'] and len(response['hits']['hits']) > 0:
         hits = response['hits']['hits']
         print(json.dumps(response, indent=2))
+
+    print("User query: {}".format(user_query))
+    print("Normalized User query: {}".format(normalized_user_query))
+    print("Classification: {}".format(classification))
+    print("Classification (norm): {}".format(classification_norm))
 
 
 if __name__ == "__main__":
