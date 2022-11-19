@@ -205,13 +205,13 @@ def normalize_user_query(input_str: str):
 def search(client, user_query, index="bbuy_products", sort="_score", sortDir="desc", classifier_threshold=None):
     #### W3: classify the query
     normalized_user_query = normalize_user_query(user_query)
-    classification = model.predict(user_query)
+    classification_without_norm = model.predict(user_query)
     classification_norm = model.predict(normalized_user_query)
 
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
-    print(classification_norm[0])
-    print(classification_norm[1])
+    classification = max(classification_without_norm[1], classification_norm[1])
+
     if classifier_threshold is not None and classification_norm[1] >= classifier_threshold:
         print("Using the classification")
     query_obj = create_query(user_query, normalized_user_query=normalized_user_query, click_prior_query=None,
@@ -222,10 +222,11 @@ def search(client, user_query, index="bbuy_products", sort="_score", sortDir="de
         hits = response['hits']['hits']
         print(json.dumps(response, indent=2))
 
-    print("User query: {}".format(user_query))
-    print("Normalized User query: {}".format(normalized_user_query))
-    print("Classification: {}".format(classification))
-    print("Classification (norm): {}".format(classification_norm))
+    print("User query:                          {}".format(user_query))
+    print("Normalized User query:               {}".format(normalized_user_query))
+    print("Classification (no norm):            {}".format(classification_without_norm))
+    print("Classification (norm):               {}".format(classification_norm))
+    print("Using higher classification score:   {}".format(classification))
 
 
 if __name__ == "__main__":
