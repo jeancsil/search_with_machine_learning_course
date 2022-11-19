@@ -2,6 +2,7 @@
 # weeks (e.g. query understanding).  See the main section at the bottom of the file
 from opensearchpy import OpenSearch
 import warnings
+
 warnings.filterwarnings("ignore", category=FutureWarning)
 import argparse
 import json
@@ -11,11 +12,18 @@ from urllib.parse import urljoin
 import pandas as pd
 import fileinput
 import logging
+import fasttext
+import nltk
+import re
 
+stemmer = nltk.stem.PorterStemmer()
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logging.basicConfig(format='%(levelname)s:%(message)s')
+
+model = fasttext.load_model('/workspace/search_with_machine_learning_course/week3/query_category_model.bin')
+
 
 # expects clicks and impressions to be in the row
 def create_prior_queries_from_group(
@@ -49,7 +57,17 @@ def create_prior_queries(doc_ids, doc_id_weights,
 
 
 # Hardcoded query here.  Better to use search templates or other query config.
-def create_query(user_query, click_prior_query, filters, sort="_score", sortDir="desc", size=10, source=None):
+def create_query(user_query, boost_by_category, click_prior_query, filters, sort="_score", sortDir="desc", size=10,
+                 source=None):
+    if boost_by_category is not None:
+        filters = [
+            {
+              "terms": {
+                "categoryPathIds": boost_by_category
+              }
+            }
+          ]
+
     query_obj = {
         'size': size,
         "sort": [
@@ -167,6 +185,7 @@ def create_query(user_query, click_prior_query, filters, sort="_score", sortDir=
             }
         }
     }
+
     if click_prior_query is not None and click_prior_query != "":
         query_obj["query"]["function_score"]["query"]["bool"]["should"].append({
             "query_string": {
@@ -183,19 +202,45 @@ def create_query(user_query, click_prior_query, filters, sort="_score", sortDir=
             print("Couldn't replace query for *")
     if source is not None:  # otherwise use the default and retrieve all source
         query_obj["_source"] = source
+    print(query_obj)
     return query_obj
+
+
+def normalize_user_query(input_str: str):
+    input_str = input_str.lower()
+    input_str = re.sub('[^a-z0-9]', ' ', input_str)
+    input_str = re.sub('\s+', ' ', input_str)
+    return " ".join([stemmer.stem(x) for x in input_str.split(" ")])
 
 
 def search(client, user_query, index="bbuy_products", sort="_score", sortDir="desc"):
     #### W3: classify the query
+    classifier_threshold = 0.5
+    normalized_user_query = normalize_user_query(user_query)
+    # classification_without_norm = model.predict(user_query)
+    classification, predicted_score = model.predict(normalized_user_query)
+    classification = [classification[0].replace("__label__", "")]
+    print(classification)
+    print(predicted_score)
+
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
-    query_obj = create_query(user_query, click_prior_query=None, filters=None, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
+    # classification = max(classification_without_norm[1], classification_norm[1])
+
+    classified_category = classification if predicted_score >= classifier_threshold else None
+    query_obj = create_query(user_query, boost_by_category=classified_category, click_prior_query=None,
+                             filters=None, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
     logging.info(query_obj)
     response = client.search(query_obj, index=index)
     if response and response['hits']['hits'] and len(response['hits']['hits']) > 0:
         hits = response['hits']['hits']
         print(json.dumps(response, indent=2))
+
+    print("User query:                          {}".format(user_query))
+    print("Normalized User query:               {}".format(normalized_user_query))
+    # print("Classification (no norm):            {}".format(classification_without_norm))
+    print("Classification (norm):               {}".format(classification))
+    # print("Using higher classification score:   {}".format(classification))
 
 
 if __name__ == "__main__":
@@ -248,5 +293,3 @@ if __name__ == "__main__":
         search(client=opensearch, user_query=query, index=index_name)
 
         print(query_prompt)
-
-    
