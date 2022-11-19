@@ -24,6 +24,7 @@ logging.basicConfig(format='%(levelname)s:%(message)s')
 
 model = fasttext.load_model('/workspace/search_with_machine_learning_course/week3/query_category_model.bin')
 
+
 # expects clicks and impressions to be in the row
 def create_prior_queries_from_group(
         click_group):  # total impressions isn't currently used, but it mayb worthwhile at some point
@@ -56,7 +57,8 @@ def create_prior_queries(doc_ids, doc_id_weights,
 
 
 # Hardcoded query here.  Better to use search templates or other query config.
-def create_query(user_query, click_prior_query, filters, sort="_score", sortDir="desc", size=10, source=None):
+def create_query(user_query, normalized_user_query, click_prior_query, filters, sort="_score", sortDir="desc", size=10,
+                 source=None):
     query_obj = {
         'size': size,
         "sort": [
@@ -200,15 +202,17 @@ def normalize_user_query(input_str: str):
     return " ".join([stemmer.stem(x) for x in input_str.split(" ")])
 
 
-def search(client, user_query, index="bbuy_products", sort="_score", sortDir="desc"):
+def search(client, user_query, index="bbuy_products", sort="_score", sortDir="desc", classifier_threshold=None):
     #### W3: classify the query
     normalized_user_query = normalize_user_query(user_query)
     classification = model.predict(user_query)
     classification_norm = model.predict(normalized_user_query)
+    print(type(classification_norm))
 
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
-    query_obj = create_query(user_query, click_prior_query=None, filters=None, sort=sort, sortDir=sortDir,
+    query_obj = create_query(user_query, normalized_user_query, click_prior_query=None, filters=None, sort=sort,
+                             sortDir=sortDir,
                              source=["name", "shortDescription"])
     logging.info(query_obj)
     response = client.search(query_obj, index=index)
@@ -236,6 +240,8 @@ if __name__ == "__main__":
                          help='The OpenSearch port')
     general.add_argument('--user',
                          help='The OpenSearch admin.  If this is set, the program will prompt for password too. If not set, use default of admin/admin')
+    general.add_argument("-ct", '--classifier_threshold', type=float, default=0.0,
+                         help='The threshold for the classifier')
 
     args = parser.parse_args()
 
@@ -245,6 +251,7 @@ if __name__ == "__main__":
 
     host = args.host
     port = args.port
+    classifier_threshold = args.classifier_threshold
     if args.user:
         password = getpass()
         auth = (args.user, password)
@@ -269,6 +276,6 @@ if __name__ == "__main__":
         query = line.rstrip()
         if query == "Exit":
             break
-        search(client=opensearch, user_query=query, index=index_name)
+        search(client=opensearch, user_query=query, index=index_name, classifier_threshold=classifier_threshold)
 
         print(query_prompt)
