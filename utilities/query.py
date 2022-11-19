@@ -60,11 +60,13 @@ def create_prior_queries(doc_ids, doc_id_weights,
 def create_query(user_query, boost_by_category, click_prior_query, filters, sort="_score", sortDir="desc", size=10,
                  source=None):
     if boost_by_category is not None:
-        filters = {
-            "terms": {
+        filters = [
+            {
+              "terms": {
                 "categoryPathIds": boost_by_category
+              }
             }
-        }
+          ]
 
     query_obj = {
         'size': size,
@@ -217,16 +219,15 @@ def search(client, user_query, index="bbuy_products", sort="_score", sortDir="de
     normalized_user_query = normalize_user_query(user_query)
     # classification_without_norm = model.predict(user_query)
     classification, predicted_score = model.predict(normalized_user_query)
+    classification = classification[0].replace("__label__", "")
     print(classification)
     print(predicted_score)
-    print(type(classification))
-    print(type(predicted_score))
 
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
     # classification = max(classification_without_norm[1], classification_norm[1])
 
-    classified_category = classification[0].replace("__label__", "") if predicted_score >= classifier_threshold else None
+    classified_category = classification if predicted_score >= classifier_threshold else None
     query_obj = create_query(user_query, boost_by_category=classified_category, click_prior_query=None,
                              filters=None, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
     logging.info(query_obj)
