@@ -207,13 +207,15 @@ def search(client, user_query, index="bbuy_products", sort="_score", sortDir="de
     normalized_user_query = normalize_user_query(user_query)
     classification = model.predict(user_query)
     classification_norm = model.predict(normalized_user_query)
-    print(type(classification_norm))
 
     #### W3: create filters and boosts
     # Note: you may also want to modify the `create_query` method above
-    query_obj = create_query(user_query, normalized_user_query, click_prior_query=None, filters=None, sort=sort,
-                             sortDir=sortDir,
-                             source=["name", "shortDescription"])
+    print(classification_norm[0])
+    print(classification_norm[1])
+    if classifier_threshold is not None and classification_norm[1] >= classifier_threshold:
+        print("Using the classification")
+    query_obj = create_query(user_query, normalized_user_query=normalized_user_query, click_prior_query=None,
+                             filters=None, sort=sort, sortDir=sortDir, source=["name", "shortDescription"])
     logging.info(query_obj)
     response = client.search(query_obj, index=index)
     if response and response['hits']['hits'] and len(response['hits']['hits']) > 0:
